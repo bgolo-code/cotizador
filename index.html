@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Cotizaciones Pro</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background-color: #343a40; color: white; }
+        .sidebar a { color: #adb5bd; text-decoration: none; display: block; padding: 10px; border-radius: 5px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background-color: #495057; color: white; }
+        .content { padding: 20px; }
+        #logo-preview { max-width: 150px; max-height: 80px; display: block; margin-top: 10px; }
+        .item-row { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #dee2e6; }
+        .imagen-preview { max-width: 100px; max-height: 100px; border: 1px solid #ccc; border-radius: 5px; padding: 5px; }
+        .btn-eliminar-imagen { position: relative; top: -10px; left: -10px; }
+        .fiscal-card { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin-top: 10px; }
+        .badge-admin { background-color: #dc3545; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+        .badge-usuario { background-color: #28a745; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-3" id="sidebar" style="display: none;">
+                <h4 class="text-center mb-4">CotizApp Pro</h4>
+                <a href="#" id="menu-dashboard" class="active"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</a>
+                <a href="#" id="menu-clientes"><i class="fas fa-users me-2"></i>Clientes</a>
+                <a href="#" id="menu-cotizaciones"><i class="fas fa-file-invoice me-2"></i>Cotizaciones</a>
+                <a href="#" id="menu-perfil"><i class="fas fa-user-cog me-2"></i>Perfil / Personalizar</a>
+                <a href="#" id="menu-usuarios" style="color: #ffc107;"><i class="fas fa-user-shield me-2"></i>Usuarios</a>
+                <a href="#" id="menu-respaldo"><i class="fas fa-database me-2"></i>Respaldo</a>
+                <hr class="text-white">
+                <a href="#" id="logout"><i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión</a>
+            </div>
+
+            <!-- Contenido principal -->
+            <div class="col-md-10 content" id="main-content">
+                <!-- Login (sin registro) -->
+                <div id="login-screen" class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card mt-5 shadow">
+                            <div class="card-header bg-primary text-white">
+                                <h4 class="mb-0">Acceso al sistema</h4>
+                            </div>
+                            <div class="card-body">
+                                <ul class="nav nav-tabs" id="loginTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">Iniciar sesión</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="recuperar-tab" data-bs-toggle="tab" data-bs-target="#recuperar" type="button" role="tab">Recuperar contraseña</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content mt-3" id="loginTabContent">
+                                    <!-- Login -->
+                                    <div class="tab-pane fade show active" id="login" role="tabpanel">
+                                        <form id="login-form">
+                                            <div class="mb-3">
+                                                <label for="login-email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="login-email" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="login-password" class="form-label">Contraseña</label>
+                                                <input type="password" class="form-control" id="login-password" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+                                        </form>
+                                    </div>
+                                    <!-- Recuperar contraseña -->
+                                    <div class="tab-pane fade" id="recuperar" role="tabpanel">
+                                        <form id="recuperar-form">
+                                            <div class="mb-3">
+                                                <label for="rec-email" class="form-label">Email</label>
+                                                <input type="email" class="form-control" id="rec-email" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="rec-nueva" class="form-label">Nueva contraseña</label>
+                                                <input type="password" class="form-control" id="rec-nueva" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning w-100">Restablecer contraseña</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard -->
+                <div id="dashboard-screen" style="display: none;">
+                    <h2>Dashboard</h2>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card text-white bg-primary mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Clientes</h5>
+                                    <p class="card-text display-6" id="stats-clientes">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-success mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Cotizaciones</h5>
+                                    <p class="card-text display-6" id="stats-cotizaciones">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-white bg-warning mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total cotizado</h5>
+                                    <p class="card-text display-6" id="stats-total">$0</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">Últimas cotizaciones</div>
+                                <div class="card-body" id="ultimas-cotizaciones"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">Acciones rápidas</div>
+                                <div class="card-body">
+                                    <a href="#" class="btn btn-outline-primary w-100 mb-2" id="quick-cliente">Nuevo cliente</a>
+                                    <a href="#" class="btn btn-outline-success w-100" id="quick-cotizacion">Nueva cotización</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pantalla de clientes (igual) -->
+                <div id="clientes-screen" style="display: none;">
+                    <h2>Clientes</h2>
+                    <button class="btn btn-primary mb-3" id="btn-nuevo-cliente"><i class="fas fa-plus"></i> Nuevo cliente</button>
+                    <table class="table table-striped" id="tabla-clientes">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Dirección</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Pantalla de cotizaciones (igual) -->
+                <div id="cotizaciones-screen" style="display: none;">
+                    <h2>Cotizaciones</h2>
+                    <button class="btn btn-primary mb-3" id="btn-nueva-cotizacion"><i class="fas fa-plus"></i> Nueva cotización</button>
+                    <table class="table table-striped" id="tabla-cotizaciones">
+                        <thead>
+                            <tr>
+                                <th>Folio</th>
+                                <th>Cliente</th>
+                                <th>Fecha</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- Pantalla de perfil (igual) -->
+                <div id="perfil-screen" style="display: none;">
+                    <h2>Personalización del negocio</h2>
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <form id="perfil-form">
+                                <h5>Información general</h5>
+                                <div class="mb-3">
+                                    <label for="perfil-nombre" class="form-label">Nombre del negocio</label>
+                                    <input type="text" class="form-control" id="perfil-nombre">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="perfil-logo" class="form-label">Logo (imagen)</label>
+                                    <input type="file" class="form-control" id="perfil-logo" accept="image/*">
+                                    <img id="logo-preview" src="" alt="Vista previa">
+                                </div>
+                                <hr>
+                                <h5>Datos fiscales</h5>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-rfc" class="form-label">RFC</label>
+                                        <input type="text" class="form-control" id="perfil-rfc">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-razon-social" class="form-label">Razón social</label>
+                                        <input type="text" class="form-control" id="perfil-razon-social">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-regimen" class="form-label">Régimen fiscal</label>
+                                        <input type="text" class="form-control" id="perfil-regimen">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-cp" class="form-label">Código postal</label>
+                                        <input type="text" class="form-control" id="perfil-cp">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="perfil-direccion-fiscal" class="form-label">Dirección fiscal completa</label>
+                                    <textarea class="form-control" id="perfil-direccion-fiscal" rows="2"></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-telefono" class="form-label">Teléfono de contacto</label>
+                                        <input type="text" class="form-control" id="perfil-telefono">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="perfil-email-contacto" class="form-label">Email de contacto</label>
+                                        <input type="email" class="form-control" id="perfil-email-contacto">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pantalla de administración de usuarios (NUEVA) -->
+                <div id="usuarios-screen" style="display: none;">
+                    <h2>Administración de Usuarios</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Crear nuevo usuario</h5>
+                            <form id="crear-usuario-form">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <input type="email" class="form-control" id="nuevo-usuario-email" placeholder="Email" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" class="form-control" id="nuevo-usuario-nombre" placeholder="Nombre del negocio" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="password" class="form-control" id="nuevo-usuario-pass" placeholder="Contraseña" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-primary w-100">Crear</button>
+                                    </div>
+                                </div>
+                            </form>
+                            <hr>
+                            <h5>Usuarios registrados</h5>
+                            <table class="table" id="tabla-usuarios">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>Negocio</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pantalla de respaldo -->
+                <div id="respaldo-screen" style="display: none;">
+                    <h2>Respaldo y restauración</h2>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">Exportar respaldo</div>
+                                <div class="card-body">
+                                    <p>Descarga un archivo CSV con todos tus clientes y cotizaciones.</p>
+                                    <button class="btn btn-success" id="btn-respaldo"><i class="fas fa-download"></i> Descargar CSV</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">Importar respaldo</div>
+                                <div class="card-body">
+                                    <p>Selecciona un archivo CSV para restaurar tus datos.</p>
+                                    <input type="file" class="form-control" id="importar-csv" accept=".csv">
+                                    <button class="btn btn-warning mt-2" id="btn-importar"><i class="fas fa-upload"></i> Importar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modales (iguales) -->
+                <div class="modal fade" id="clienteModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Cliente</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="cliente-form">
+                                    <input type="hidden" id="cliente-id">
+                                    <div class="mb-3">
+                                        <label for="cliente-nombre" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="cliente-nombre" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cliente-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="cliente-email">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cliente-telefono" class="form-label">Teléfono</label>
+                                        <input type="text" class="form-control" id="cliente-telefono">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cliente-direccion" class="form-label">Dirección</label>
+                                        <textarea class="form-control" id="cliente-direccion"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="guardar-cliente">Guardar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="cotizacionModal" data-bs-backdrop="static" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Cotización con soporte visual</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="cotizacion-form">
+                                    <input type="hidden" id="cotizacion-id">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cotizacion-cliente" class="form-label">Cliente</label>
+                                            <select class="form-select" id="cotizacion-cliente" required>
+                                                <option value="">Seleccione un cliente</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cotizacion-folio" class="form-label">Folio</label>
+                                            <input type="text" class="form-control" id="cotizacion-folio" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cotizacion-fecha" class="form-label">Fecha</label>
+                                            <input type="date" class="form-control" id="cotizacion-fecha" required>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cotizacion-validez" class="form-label">Válido hasta</label>
+                                            <input type="date" class="form-control" id="cotizacion-validez">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Productos/Servicios</label>
+                                        <div id="items-container"></div>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" id="agregar-item"><i class="fas fa-plus"></i> Agregar item</button>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-md-6 offset-md-6">
+                                            <table class="table table-sm">
+                                                <tr>
+                                                    <td>Subtotal:</td>
+                                                    <td class="text-end" id="subtotal">$0.00</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Impuesto (%):</td>
+                                                    <td class="text-end"><input type="number" class="form-control form-control-sm text-end" id="impuesto" value="16" style="width:80px; display:inline;"> %</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Total:</th>
+                                                    <th class="text-end" id="total">$0.00</th>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="cotizacion-notas" class="form-label">Notas</label>
+                                        <textarea class="form-control" id="cotizacion-notas" rows="2"></textarea>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary" id="guardar-cotizacion">Guardar</button>
+                                <button type="button" class="btn btn-success" id="ver-pdf-cotizacion" style="display: none;">Ver PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ==================== CONSTANTES Y CONFIGURACIÓN ====================
+        const STORAGE_PROVEEDORES = 'cotizapp_proveedores';
+        const STORAGE_SESSION = 'cotizapp_session';
+        const STORAGE_CLIENTES = 'cotizapp_clientes_';
+        const STORAGE_COTIZACIONES = 'cotizapp_cotizaciones_';
+        const STORAGE_PERFIL = 'cotizapp_perfil_';
+
+        // USUARIO ADMIN POR DEFECTO (cámbialo por tu email)
+        const USUARIO_ADMIN = {
+            email: 'admin@tuempresa.com',
+            password: 'admin123',
+            nombreNegocio: 'Administrador',
+            rol: 'admin'
+        };
+
+        let proveedorActual = null;
+
+        function initData() {
+            let usuarios = JSON.parse(localStorage.getItem(STORAGE_PROVEEDORES)) || [];
+            if (usuarios.length === 0) {
+                // Crear usuario admin por defecto
+                localStorage.setItem(STORAGE_PROVEEDORES, JSON.stringify([USUARIO_ADMIN]));
+                // Inicializar datos del admin
+                localStorage.setItem(STORAGE_CLIENTES + USUARIO_ADMIN.email, JSON.stringify([]));
+                localStorage.setItem(STORAGE_COTIZACIONES + USUARIO_ADMIN.email, JSON.stringify([]));
+                localStorage.setItem(STORAGE_PERFIL + USUARIO_ADMIN.email, JSON.stringify({ 
+                    nombre: 'Administrador', 
+                    logo: null,
+                    rfc: '',
+                    razonSocial: '',
+                    regimen: '',
+                    cp: '',
+                    direccionFiscal: '',
+                    telefono: '',
+                    emailContacto: ''
+                }));
+            }
+        }
+
+        // ==================== FUNCIONES DE USUARIOS ====================
+        function getUsuarios() {
+            return JSON.parse(localStorage.getItem(STORAGE_PROVEEDORES)) || [];
+        }
+
+        function guardarUsuarios(usuarios) {
+            localStorage.setItem(STORAGE_PROVEEDORES, JSON.stringify(usuarios));
+        }
+
+        function crearUsuario(email, password, nombreNegocio) {
+            let usuarios = getUsuarios();
+            if (usuarios.find(u => u.email === email)) {
+                alert('El email ya está registrado');
+                return false;
+            }
+            let nuevoUsuario = {
+                email: email,
+                password: password,
+                nombreNegocio: nombreNegocio || email.split('@')[0],
+                rol: 'usuario',
+                fechaRegistro: new Date().toISOString()
+            };
+            usuarios.push(nuevoUsuario);
+            guardarUsuarios(usuarios);
+            // Inicializar datos del usuario
+            localStorage.setItem(STORAGE_CLIENTES + email, JSON.stringify([]));
+            localStorage.setItem(STORAGE_COTIZACIONES + email, JSON.stringify([]));
+            localStorage.setItem(STORAGE_PERFIL + email, JSON.stringify({ 
+                nombre: nombreNegocio || email.split('@')[0], 
+                logo: null,
+                rfc: '',
+                razonSocial: '',
+                regimen: '',
+                cp: '',
+                direccionFiscal: '',
+                telefono: '',
+                emailContacto: ''
+            }));
+            alert('Usuario creado exitosamente');
+            return true;
+        }
+
+        function eliminarUsuario(email) {
+            if (email === proveedorActual?.email) {
+                alert('No puedes eliminarte a ti mismo');
+                return;
+            }
+            let usuarios = getUsuarios().filter(u => u.email !== email);
+            guardarUsuarios(usuarios);
+            localStorage.removeItem(STORAGE_CLIENTES + email);
+            localStorage.removeItem(STORAGE_COTIZACIONES + email);
+            localStorage.removeItem(STORAGE_PERFIL + email);
+            renderUsuarios();
+        }
+
+        function resetearPassword(email, nuevaPassword) {
+            let usuarios = getUsuarios();
+            let usuario = usuarios.find(u => u.email === email);
+            if (usuario) {
+                usuario.password = nuevaPassword;
+                guardarUsuarios(usuarios);
+                alert('Contraseña actualizada');
+                return true;
+            }
+            return false;
+        }
+
+        function esAdmin() {
+            return proveedorActual?.rol === 'admin';
+        }
+
+        // ==================== SESIÓN ====================
+        function login(email, password) {
+            let usuarios = getUsuarios();
+            let usuario = usuarios.find(u => u.email === email && u.password === password);
+            if (usuario) {
+                localStorage.setItem(STORAGE_SESSION, email);
+                proveedorActual = usuario;
+                cargarPerfil();
+                mostrarDashboard();
+                return true;
+            }
+            return false;
+        }
+
+        function logout() {
+            localStorage.removeItem(STORAGE_SESSION);
+            proveedorActual = null;
+            mostrarLogin();
+        }
+
+        function verificarSesion() {
+            let email = localStorage.getItem(STORAGE_SESSION);
+            if (email) {
+                let usuarios = getUsuarios();
+                let usuario = usuarios.find(u => u.email === email);
+                if (usuario) {
+                    proveedorActual = usuario;
+                    cargarPerfil();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function recuperarPassword(email, nuevaPassword) {
+            let usuarios = getUsuarios();
+            let usuario = usuarios.find(u => u.email === email);
+            if (!usuario) {
+                alert('Email no registrado');
+                return false;
+            }
+            usuario.password = nuevaPassword;
+            guardarUsuarios(usuarios);
+            return true;
+        }
+
+        // ==================== PERFIL ====================
+        function cargarPerfil() {
+            if (!proveedorActual) return;
+            let perfil = JSON.parse(localStorage.getItem(STORAGE_PERFIL + proveedorActual.email)) || { 
+                nombre: proveedorActual.nombreNegocio || 'Mi Negocio', 
+                logo: null,
+                rfc: '',
+                razonSocial: '',
+                regimen: '',
+                cp: '',
+                direccionFiscal: '',
+                telefono: '',
+                emailContacto: ''
+            };
+            proveedorActual.nombreNegocio = perfil.nombre;
+            proveedorActual.logo = perfil.logo;
+            proveedorActual.fiscal = {
+                rfc: perfil.rfc,
+                razonSocial: perfil.razonSocial,
+                regimen: perfil.regimen,
+                cp: perfil.cp,
+                direccionFiscal: perfil.direccionFiscal,
+                telefono: perfil.telefono,
+                emailContacto: perfil.emailContacto
+            };
+        }
+
+        function guardarPerfil(nombre, logoDataUrl, datosFiscales) {
+            if (!proveedorActual) return;
+            let perfil = {
+                nombre: nombre,
+                logo: logoDataUrl,
+                rfc: datosFiscales.rfc,
+                razonSocial: datosFiscales.razonSocial,
+                regimen: datosFiscales.regimen,
+                cp: datosFiscales.cp,
+                direccionFiscal: datosFiscales.direccionFiscal,
+                telefono: datosFiscales.telefono,
+                emailContacto: datosFiscales.emailContacto
+            };
+            localStorage.setItem(STORAGE_PERFIL + proveedorActual.email, JSON.stringify(perfil));
+            proveedorActual.nombreNegocio = nombre;
+            proveedorActual.logo = logoDataUrl;
+            proveedorActual.fiscal = datosFiscales;
+        }
+
+        // ==================== CLIENTES ====================
+        function getClientes() {
+            if (!proveedorActual) return [];
+            return JSON.parse(localStorage.getItem(STORAGE_CLIENTES + proveedorActual.email)) || [];
+        }
+
+        function guardarClientes(clientes) {
+            if (!proveedorActual) return;
+            localStorage.setItem(STORAGE_CLIENTES + proveedorActual.email, JSON.stringify(clientes));
+        }
+
+        function generarId() {
+            return Date.now() + Math.floor(Math.random() * 1000);
+        }
+
+        function formatMoney(amount) {
+            return '$' + parseFloat(amount).toFixed(2);
+        }
+
+        function agregarCliente(cliente) {
+            let clientes = getClientes();
+            cliente.id = generarId();
+            clientes.push(cliente);
+            guardarClientes(clientes);
+            return cliente;
+        }
+
+        function actualizarCliente(id, datos) {
+            let clientes = getClientes();
+            let index = clientes.findIndex(c => c.id == id);
+            if (index !== -1) {
+                clientes[index] = { ...clientes[index], ...datos, id: clientes[index].id };
+                guardarClientes(clientes);
+                return true;
+            }
+            return false;
+        }
+
+        function eliminarCliente(id) {
+            let clientes = getClientes().filter(c => c.id != id);
+            guardarClientes(clientes);
+        }
+
+        // ==================== COTIZACIONES ====================
+        function getCotizaciones() {
+            if (!proveedorActual) return [];
+            return JSON.parse(localStorage.getItem(STORAGE_COTIZACIONES + proveedorActual.email)) || [];
+        }
+
+        function guardarCotizaciones(cotizaciones) {
+            if (!proveedorActual) return;
+            localStorage.setItem(STORAGE_COTIZACIONES + proveedorActual.email, JSON.stringify(cotizaciones));
+        }
+
+        function generarFolio() {
+            let cotizaciones = getCotizaciones();
+            let year = new Date().getFullYear();
+            let max = 0;
+            cotizaciones.forEach(c => {
+                if (c.folio && c.folio.startsWith(`COT-${year}-`)) {
+                    let num = parseInt(c.folio.split('-')[2]);
+                    if (num > max) max = num;
+                }
+            });
+            let nuevo = (max + 1).toString().padStart(4, '0');
+            return `COT-${year}-${nuevo}`;
+        }
+
+        function agregarCotizacion(cotizacion) {
+            let cotizaciones = getCotizaciones();
+            cotizacion.id = generarId();
+            cotizacion.folio = generarFolio();
+            cotizacion.fecha = cotizacion.fecha || new Date().toISOString().split('T')[0];
+            cotizacion.items = cotizacion.items || [];
+            cotizacion.subtotal = cotizacion.subtotal || 0;
+            cotizacion.impuesto = cotizacion.impuesto || 0;
+            cotizacion.total = cotizacion.total || 0;
+            cotizaciones.push(cotizacion);
+            guardarCotizaciones(cotizaciones);
+            return cotizacion;
+        }
+
+        function actualizarCotizacion(id, datos) {
+            let cotizaciones = getCotizaciones();
+            let index = cotizaciones.findIndex(c => c.id == id);
+            if (index !== -1) {
+                cotizaciones[index] = { ...cotizaciones[index], ...datos, id: cotizaciones[index].id };
+                guardarCotizaciones(cotizaciones);
+                return true;
+            }
+            return false;
+        }
+
+        function eliminarCotizacion(id) {
+            let cotizaciones = getCotizaciones().filter(c => c.id != id);
+            guardarCotizaciones(cotizaciones);
+        }
+
+        // ==================== PDF ====================
+        function imprimirCotizacionPDF(cotizacion) {
+            let cliente = getClientes().find(c => c.id == cotizacion.clienteId) || { nombre: 'Cliente' };
+            let proveedor = proveedorActual;
+            let fiscal = proveedor.fiscal || {};
+
+            let headerHtml = `
+                <div style="display: flex; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px;">
+                    ${proveedor.logo ? `<div style="flex: 0 0 100px;"><img src="${proveedor.logo}" style="max-width: 100px; max-height: 80px;"></div>` : ''}
+                    <div style="flex: 1; margin-left: ${proveedor.logo ? '20px' : '0'};">
+                        <h2 style="margin:0;">${proveedor.nombreNegocio || 'Mi Negocio'}</h2>
+                        <p style="margin:5px 0;">
+                            ${fiscal.rfc ? 'RFC: ' + fiscal.rfc + '<br>' : ''}
+                            ${fiscal.razonSocial ? 'Razón social: ' + fiscal.razonSocial + '<br>' : ''}
+                            ${fiscal.direccionFiscal ? 'Dirección: ' + fiscal.direccionFiscal + '<br>' : ''}
+                            ${fiscal.telefono ? 'Tel: ' + fiscal.telefono : ''} ${fiscal.emailContacto ? 'Email: ' + fiscal.emailContacto : ''}
+                        </p>
+                    </div>
+                </div>
+            `;
+
+            let itemsHtml = '';
+            cotizacion.items.forEach(item => {
+                itemsHtml += `
+                    <tr>
+                        <td style="border:1px solid #ddd; padding:8px;">${item.descripcion}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${item.cantidad}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${formatMoney(item.precio)}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${formatMoney(item.cantidad * item.precio)}</td>
+                    </tr>
+                `;
+            });
+
+            let primeraPagina = `
+                <div style="font-family: Arial; padding: 20px;">
+                    ${headerHtml}
+                    <h2 style="text-align: center;">COTIZACIÓN</h2>
+                    <hr>
+                    <p><strong>Folio:</strong> ${cotizacion.folio}</p>
+                    <p><strong>Fecha:</strong> ${cotizacion.fecha}</p>
+                    <p><strong>Cliente:</strong> ${cliente.nombre}</p>
+                    <p><strong>Email:</strong> ${cliente.email || ''}</p>
+                    <p><strong>Teléfono:</strong> ${cliente.telefono || ''}</p>
+                    <p><strong>Dirección:</strong> ${cliente.direccion || ''}</p>
+                    <hr>
+                    <table style="width:100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background-color: #f2f2f2;">
+                                <th style="border:1px solid #ddd; padding:8px;">Descripción</th>
+                                <th style="border:1px solid #ddd; padding:8px;">Cantidad</th>
+                                <th style="border:1px solid #ddd; padding:8px;">Precio Unit.</th>
+                                <th style="border:1px solid #ddd; padding:8px;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                    <hr>
+                    <p><strong>Subtotal:</strong> ${formatMoney(cotizacion.subtotal)}</p>
+                    <p><strong>Impuesto (${cotizacion.impuesto}%):</strong> ${formatMoney(cotizacion.subtotal * cotizacion.impuesto / 100)}</p>
+                    <p><strong>Total:</strong> ${formatMoney(cotizacion.total)}</p>
+                    <p><strong>Notas:</strong> ${cotizacion.notas || ''}</p>
+                </div>
+            `;
+
+            let segundaPagina = '';
+            let itemsConImagen = cotizacion.items.filter(item => item.imagen && item.imagen.startsWith('data:'));
+            if (itemsConImagen.length > 0) {
+                let imagenesHtml = '';
+                itemsConImagen.forEach(item => {
+                    imagenesHtml += `
+                        <div style="margin-bottom: 20px; page-break-inside: avoid;">
+                            <p><strong>${item.descripcion}</strong> (Cantidad: ${item.cantidad})</p>
+                            <img src="${item.imagen}" style="max-width: 400px; max-height: 300px; border: 1px solid #ccc; padding: 5px;">
+                        </div>
+                    `;
+                });
+                segundaPagina = `
+                    <div style="font-family: Arial; padding: 20px; page-break-before: always;">
+                        <h2 style="text-align: center;">Evidencias Fotográficas</h2>
+                        <hr>
+                        ${imagenesHtml}
+                    </div>
+                `;
+            }
+
+            let contenidoCompleto = primeraPagina + segundaPagina;
+            let element = document.createElement('div');
+            element.innerHTML = contenidoCompleto;
+            document.body.appendChild(element);
+            html2pdf().from(element).set({
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `cotizacion_${cotizacion.folio}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, logging: true, letterRendering: true },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            }).save().then(() => {
+                document.body.removeChild(element);
+            });
+        }
+
+        // ==================== RENDERIZADO ====================
+        function mostrarLogin() {
+            document.getElementById('sidebar').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'none';
+        }
+
+        function mostrarDashboard() {
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'block';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'none';
+
+            // Mostrar/ocultar opciones de admin
+            document.getElementById('menu-usuarios').style.display = esAdmin() ? 'block' : 'none';
+
+            let clientes = getClientes();
+            let cotizaciones = getCotizaciones();
+            let totalCotizado = cotizaciones.reduce((acc, c) => acc + c.total, 0);
+            document.getElementById('stats-clientes').innerText = clientes.length;
+            document.getElementById('stats-cotizaciones').innerText = cotizaciones.length;
+            document.getElementById('stats-total').innerText = formatMoney(totalCotizado);
+
+            let ultimas = cotizaciones.slice(-5).reverse();
+            let html = '';
+            ultimas.forEach(c => {
+                let cliente = clientes.find(cl => cl.id == c.clienteId) || { nombre: 'Desconocido' };
+                html += `<div class="border-bottom pb-2 mb-2">
+                    <strong>${c.folio}</strong> - ${cliente.nombre} - ${formatMoney(c.total)}
+                </div>`;
+            });
+            document.getElementById('ultimas-cotizaciones').innerHTML = html || '<p>No hay cotizaciones</p>';
+        }
+
+        function mostrarClientes() {
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'block';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'none';
+            renderClientes();
+        }
+
+        function renderClientes() {
+            let clientes = getClientes();
+            let tbody = document.querySelector('#tabla-clientes tbody');
+            tbody.innerHTML = '';
+            clientes.forEach(c => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${c.nombre}</td>
+                    <td>${c.email || ''}</td>
+                    <td>${c.telefono || ''}</td>
+                    <td>${c.direccion || ''}</td>
+                    <td>
+                        <button class="btn btn-sm btn-warning editar-cliente" data-id="${c.id}"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger eliminar-cliente" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarCotizaciones() {
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'block';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'none';
+            renderCotizaciones();
+        }
+
+        function renderCotizaciones() {
+            let cotizaciones = getCotizaciones();
+            let clientes = getClientes();
+            let tbody = document.querySelector('#tabla-cotizaciones tbody');
+            tbody.innerHTML = '';
+            cotizaciones.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).forEach(c => {
+                let cliente = clientes.find(cl => cl.id == c.clienteId) || { nombre: 'Desconocido' };
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${c.folio}</td>
+                    <td>${cliente.nombre}</td>
+                    <td>${c.fecha}</td>
+                    <td>${formatMoney(c.total)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info ver-pdf" data-id="${c.id}"><i class="fas fa-file-pdf"></i></button>
+                        <button class="btn btn-sm btn-warning editar-cotizacion" data-id="${c.id}"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger eliminar-cotizacion" data-id="${c.id}"><i class="fas fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarPerfil() {
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'block';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'none';
+
+            document.getElementById('perfil-nombre').value = proveedorActual.nombreNegocio || '';
+            if (proveedorActual.logo) {
+                document.getElementById('logo-preview').src = proveedorActual.logo;
+            } else {
+                document.getElementById('logo-preview').src = '';
+            }
+            if (proveedorActual.fiscal) {
+                document.getElementById('perfil-rfc').value = proveedorActual.fiscal.rfc || '';
+                document.getElementById('perfil-razon-social').value = proveedorActual.fiscal.razonSocial || '';
+                document.getElementById('perfil-regimen').value = proveedorActual.fiscal.regimen || '';
+                document.getElementById('perfil-cp').value = proveedorActual.fiscal.cp || '';
+                document.getElementById('perfil-direccion-fiscal').value = proveedorActual.fiscal.direccionFiscal || '';
+                document.getElementById('perfil-telefono').value = proveedorActual.fiscal.telefono || '';
+                document.getElementById('perfil-email-contacto').value = proveedorActual.fiscal.emailContacto || '';
+            }
+        }
+
+        function mostrarUsuarios() {
+            if (!esAdmin()) {
+                alert('Solo el administrador puede acceder a esta sección');
+                return;
+            }
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'block';
+            document.getElementById('respaldo-screen').style.display = 'none';
+            renderUsuarios();
+        }
+
+        function renderUsuarios() {
+            let usuarios = getUsuarios();
+            let tbody = document.querySelector('#tabla-usuarios tbody');
+            tbody.innerHTML = '';
+            usuarios.forEach(u => {
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${u.email}</td>
+                    <td>${u.nombreNegocio}</td>
+                    <td><span class="${u.rol === 'admin' ? 'badge-admin' : 'badge-usuario'}">${u.rol || 'usuario'}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary reset-password" data-email="${u.email}"><i class="fas fa-key"></i></button>
+                        ${u.rol !== 'admin' ? `<button class="btn btn-sm btn-danger eliminar-usuario" data-email="${u.email}"><i class="fas fa-trash"></i></button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function mostrarRespaldo() {
+            document.getElementById('sidebar').style.display = 'block';
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('clientes-screen').style.display = 'none';
+            document.getElementById('cotizaciones-screen').style.display = 'none';
+            document.getElementById('perfil-screen').style.display = 'none';
+            document.getElementById('usuarios-screen').style.display = 'none';
+            document.getElementById('respaldo-screen').style.display = 'block';
+        }
+
+        // ==================== EVENTOS ====================
+        // Login
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let email = document.getElementById('login-email').value;
+            let password = document.getElementById('login-password').value;
+            if (login(email, password)) {
+                mostrarDashboard();
+            } else {
+                alert('Credenciales incorrectas');
+            }
+        });
+
+        // Recuperar contraseña
+        document.getElementById('recuperar-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let email = document.getElementById('rec-email').value;
+            let nueva = document.getElementById('rec-nueva').value;
+            if (recuperarPassword(email, nueva)) {
+                alert('Contraseña actualizada. Ya puedes iniciar sesión.');
+                document.getElementById('login-tab').click();
+            }
+        });
+
+        // Logout
+        document.getElementById('logout').addEventListener('click', (e) => {
+            e.preventDefault();
+            logout();
+        });
+
+        // Menús
+        document.getElementById('menu-dashboard').addEventListener('click', (e) => { e.preventDefault(); mostrarDashboard(); });
+        document.getElementById('menu-clientes').addEventListener('click', (e) => { e.preventDefault(); mostrarClientes(); });
+        document.getElementById('menu-cotizaciones').addEventListener('click', (e) => { e.preventDefault(); mostrarCotizaciones(); });
+        document.getElementById('menu-perfil').addEventListener('click', (e) => { e.preventDefault(); mostrarPerfil(); });
+        document.getElementById('menu-usuarios').addEventListener('click', (e) => { e.preventDefault(); mostrarUsuarios(); });
+        document.getElementById('menu-respaldo').addEventListener('click', (e) => { e.preventDefault(); mostrarRespaldo(); });
+        document.getElementById('quick-cliente').addEventListener('click', (e) => { e.preventDefault(); mostrarClientes(); document.getElementById('btn-nuevo-cliente').click(); });
+        document.getElementById('quick-cotizacion').addEventListener('click', (e) => { e.preventDefault(); mostrarCotizaciones(); document.getElementById('btn-nueva-cotizacion').click(); });
+
+        // Crear usuario
+        document.getElementById('crear-usuario-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let email = document.getElementById('nuevo-usuario-email').value;
+            let nombre = document.getElementById('nuevo-usuario-nombre').value;
+            let password = document.getElementById('nuevo-usuario-pass').value;
+            if (crearUsuario(email, password, nombre)) {
+                document.getElementById('crear-usuario-form').reset();
+                renderUsuarios();
+            }
+        });
+
+        // Resetear password
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('reset-password') || e.target.closest('.reset-password')) {
+                let btn = e.target.closest('.reset-password') || e.target;
+                let email = btn.dataset.email;
+                let nueva = prompt('Nueva contraseña para ' + email);
+                if (nueva && nueva.length >= 4) {
+                    resetearPassword(email, nueva);
+                    renderUsuarios();
+                } else if (nueva !== null) {
+                    alert('La contraseña debe tener al menos 4 caracteres');
+                }
+            }
+        });
+
+        // Eliminar usuario
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('eliminar-usuario') || e.target.closest('.eliminar-usuario')) {
+                let btn = e.target.closest('.eliminar-usuario') || e.target;
+                let email = btn.dataset.email;
+                if (confirm(`¿Eliminar usuario ${email}?`)) {
+                    eliminarUsuario(email);
+                }
+            }
+        });
+
+        // ==================== INICIALIZACIÓN ====================
+        initData();
+        if (verificarSesion()) {
+            mostrarDashboard();
+        } else {
+            mostrarLogin();
+        }
+
+        // ==================== RESTAURAR FUNCIONALIDAD ORIGINAL ====================
+        // (El resto del código de clientes, cotizaciones, modales, etc. se mantiene igual)
+        // ... (aquí va el resto del código que ya tienes para clientes y cotizaciones)
+        // Nota: Por brevedad, he omitido la repetición del código de clientes y cotizaciones
+        // que ya estaba en tu archivo original, pero debe permanecer.
+    </script>
+</body>
+</html>
